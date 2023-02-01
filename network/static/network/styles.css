@@ -1,0 +1,37 @@
+.post { 
+    border: 1px solid black;
+    display:flex;
+    justify-content: center;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin: 5px 20px;
+}
+
+.new_post {
+   margin:auto;
+   padding:10px;
+   text-align: center;
+}
+
+.all {
+    display:flex;
+    justify-content: flex-start;
+    flex-direction: column;
+    margin: 20px;
+}
+
+.username-header {
+    background-color: slateblue;
+}
+
+.username {
+    color:azure;
+}
+
+.time {
+    color:dimgray;
+}
+
+.title {
+    text-align: center;
+}

@@ -1,0 +1,108 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <script>
+        function getcookie(name){
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`)
+            if(parts.length == 2) return parts.pop().split(';').shift()
+        }
+
+        function submithandler(id){
+            const textAreaValue = document.getElementById(`textarea_${id}`).value;
+            const content = document.getElementById(`content_${id}`);
+            const modal = document.getElementById(`edit_post${id}`);
+            fetch( `/edit/${id}` , {
+                method: "POST",
+                headers: {"Content-type": "application/json", "X-CSRFToken": getcookie("csrftoken")},
+                body: JSON.stringify({
+                    content: textAreaValue
+                })
+            })
+            .then (response => response.json())
+            .then (result => {
+                content.innerHTML = result.data;
+
+                modal.classList.remove('show');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.setAttribute('style', 'display: none');
+
+                const modalsbackdrop = document.getElementsByClassName('modal-backdrop');
+
+                for(let i=0; i < modalsbackdrop.length; i++){
+                    document.body.removeChild(modalsbackdrop[i]);
+                }
+            })
+        }
+    </script>
+
+    <h1 class="title">{{ username }}</h1>
+
+    <div>
+        <h3>Followers: {{ followers.count }} </h3>
+        <h3>Following: {{ following.count }}</h3>
+        {% if user.is_authenticated %}
+            {% if user != users_profile %}
+                {% if isFollowing %}
+                    <form action="{% url 'unfollow' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="userfollow" value="{{ users_profile }}"/>
+                        <input type="submit" value="Unfollow"/>
+                    </form>
+                {% else %}
+                    <form action="{% url 'follow' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="userfollow" value="{{ users_profile }}"/>
+                        <input type="submit" value="Follow"/>
+                    </form>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <div class="all text-center">
+    {% for post in posts_of_page %}
+        <div class="post">
+            <h5 class="username-header"><a href="{% url 'profile' user_id=post.user.id %}" class="username">@{{ post.user }}</a></h5>
+            <h6 class="content">{{ post.content }}</h6>
+            <p class="time">{{ post.timestamp }}</p>
+            {% if user.is_authenticated %}
+                {% if user == post.user %}
+                    <div>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#edit_post{{ post.id }}">Edit</button>
+                    </div>
+                    <div class="modal" tabindex="-1" role="dialog" id="edit_post{{ post.id }}" aria-labelledby="edit_post{{ post.id }}_label" aria-hidden="true" >
+                        <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                            <h5 class="modal-title">Edit Post</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                            </div>
+                            <div class="modal-body">
+                            <textarea rows="5" id="textarea_{{ post.id }}" class="form-control" name="content">{{ post.content }}</textarea>
+                            </div>
+                            <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="submithandler('{{ post.id }}')">Save changes</button>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endfor %}
+    <nav aria-label="Page navigation example">
+        <ul class="pagination d-flex justify-content-center">
+            {% if posts_of_page.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ posts_of_page.previous_page_number }}">Previous</a></li>
+            {% endif %}
+            {% if posts_of_page.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ posts_of_page.next_page_number }}">Next</a></li>#
+            {% endif %}
+        </ul>
+      </nav>
+    </div>
+{% endblock %}
